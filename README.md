@@ -2,10 +2,10 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.0.0.
 
-## Development server
+## Interceptor for managing request retry , token expired , refreshing token , authentication resend the request
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
-
+Interceptor for managing request retry request in case of error or failure due to token expired , refreshing token ,
+ authentication so resend the request, response on same 
 
 ## Request using http client  code 
 ...
