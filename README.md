@@ -1,6 +1,6 @@
 # Interceptor
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.0.0.
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.0.0. and Updated to 7.0.0
 
 ## Interceptor for managing request retry , token expired , refreshing token , authentication resend the request
 
@@ -24,10 +24,34 @@ Interceptor for managing request retry request in case of error or failure due t
 
 
 
-## Interceptor code using dummy json api jsonplaceholder
+## Interceptor code for renew token 
 ```javascript
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
+
+    testSer(): Observable<any> {
+    if (this.inProgress) {
+      return Observable.create((observer) => {
+        this.subject.subscribe((value) => {
+          console.log(value);
+          console.log('INSIDE IF');
+          observer.next();
+          observer.complete();
+        });
+      });
+    } else {
+      this.inProgress = true;
+      return this.tokenService.getToken()
+      .pipe(tap((data) => {
+        console.log('data in progress testSer',data);
+        this.test = data;
+        this.inProgress = false;
+        this.subject.next('1');
+      }));
+    }
+
+  }
+
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     // @ts-ignore
     return next.handle(request)
