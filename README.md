@@ -28,14 +28,29 @@ Interceptor for managing request retry request in case of error or failure due t
 ```javascript
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    console.log(req.url);
-    return next.handle(req).pipe(
-      catchError(error => {
-        const newReq =  new HttpRequest('GET', 'https://jsonplaceholder.typicode.com/posts');
-        return next.handle(newReq);
-      }));
-  }
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // @ts-ignore
+    return next.handle(request)
+    .pipe(catchError(error => {
+       console.log(error);
+      if (error.status === 400 && error.error.errorCode == "INVALID_EXPIRED_TOKEN") {
+         return this.testSer().pipe(
+          switchMap(() => {
+            const newToken = this.appStorage.getFromApp('accessToken');
+            console.log('Getting the token from session storage in expired interceptor');
+            request = request.clone({
+              setHeaders: {
+                Authorization: 'Bearer ' + newToken
+              }
+            });
+            request = request.clone({url: request.url});
+            return next.handle(request);
+          }),
+        );
+      }
+
+      return throwError(error);
+    }))
 }
 ```
 
