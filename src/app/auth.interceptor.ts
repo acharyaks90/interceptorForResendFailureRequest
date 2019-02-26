@@ -1,34 +1,31 @@
-import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
-import {Injectable} from '@angular/core';
+/**
+ * Interceptor for appending the auth token to each request and handling the after response
+ */
+import {HttpEvent, HttpInterceptor, HttpRequest, HttpHandler} from '@angular/common/http';
 import {Observable} from 'rxjs';
-import {catchError, tap, map} from 'rxjs/operators';
-import {GetTokenService} from './get-token.service';
+import { AppStorageService } from './app-storage.service';
 
 
-@Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-
-  constructor(private getToken: GetTokenService ){
-
+  constructor(private appStorage: AppStorageService) {
   }
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    console.log(req.url);
-    return next.handle(req).pipe(
-      catchError(error => {
-        console.log(error);
-        req = req.clone({url: 'https://jsonplaceholder.typicode.com/posts'})
-        const newReq =  new HttpRequest('GET', 'https://jsonplaceholder.typicode.com/posts');
-        this.getToken.getToken()
-          .pipe(map(data=>{
-            return next.handle(newReq);
-          }))
-          .subscribe(data=>{
-          console.log(data);
-          });
-        // return next.handle(newReq); //optional
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    if (!request || !request.url ||  (request.url.includes('auth/renew') ) ) {
+      return next.handle(request);  // ||  (request.url.startsWith(SERVER_API_URL) && request.url.indexOf('getaccesstoken') > -1) now server api loader from app settings
+    }
 
-      }));
+    const token = this.appStorage.isKeyExist('accessToken') ?  this.appStorage.getFromApp('accessToken') : null;
+    console.log('Setting token in interceptor')
+    if (!!token) {
+      request = request.clone({
+        setHeaders: {
+          Authorization: 'Bearer ' + token
+        }
+      });
+    }
+    return next.handle(request);
   }
+
+
 }
-
